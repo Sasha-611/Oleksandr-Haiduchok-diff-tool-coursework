@@ -1,16 +1,17 @@
+
 #pragma once
 
 #include <string>
 #include <vector>
 
-// Абстрактний клас для алгоритмів порівняння
+// Base class for comparison algorithms
 class DiffAlgorithm {
 public:
     virtual ~DiffAlgorithm() = default;
 
-    // Метод порівняння двох послідовностей рядків
+    // Compares two sets of lines
     virtual std::vector<std::string> compare(
         const std::vector<std::string>& original,
         const std::vector<std::string>& modified
     ) const = 0;
-}; #pragma once
+};
