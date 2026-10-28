@@ -218,3 +218,23 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# Visual Studio
+.vs/
+*.suo
+*.user
+
+# CMake
+out/
+CMakeFiles/
+CMakeCache.txt
+cmake_install.cmake
+
+# C++ build files
+*.obj
+*.o
+*.exe
+*.dll
+*.pyd
+*.lib
+*.pdb
