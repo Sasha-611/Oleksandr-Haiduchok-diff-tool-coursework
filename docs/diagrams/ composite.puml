@@ -1,0 +1,39 @@
+
+@startuml
+title Composite Pattern - File System Tree
+
+skinparam classAttributeIconSize 0
+skinparam linetype ortho
+skinparam shadowing false
+
+left to right direction
+
+abstract class FileSystemNode {
+    +getName(): string
+    +accept(visitor: FileSystemVisitor): void
+}
+
+class FileNode {
+    -name: string
+    -path: string
+    +getName(): string
+    +getPath(): string
+    +accept(visitor: FileSystemVisitor): void
+}
+
+class DirectoryNode {
+    -name: string
+    -children: vector<shared_ptr<FileSystemNode>>
+    +add(node: FileSystemNode): void
+    +remove(node: FileSystemNode): void
+    +getName(): string
+    +getChildren(): vector<shared_ptr<FileSystemNode>>
+    +accept(visitor: FileSystemVisitor): void
+}
+
+FileSystemNode <|-- FileNode
+FileSystemNode <|-- DirectoryNode
+
+DirectoryNode "1" *-- "0..*" FileSystemNode
+
+@enduml

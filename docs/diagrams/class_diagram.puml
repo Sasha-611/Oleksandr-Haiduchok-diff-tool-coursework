@@ -1,0 +1,280 @@
+
+@startuml
+title Diff Tool - Complete Class Diagram
+
+skinparam classAttributeIconSize 0
+skinparam linetype ortho
+skinparam packageStyle rectangle
+skinparam shadowing false
+
+left to right direction
+
+' =====================================
+' Comparison Models
+' =====================================
+
+package "Comparison Models" {
+
+    enum ChangeType {
+        UNCHANGED
+        ADDED
+        REMOVED
+    }
+
+    enum ComparisonLevel {
+        LINE
+        WORD
+        CHARACTER
+    }
+
+    class DiffOptions {
+        +ignoreWhitespace: bool
+        +ignoreCase: bool
+        +level: ComparisonLevel
+    }
+
+    class DiffChange {
+        +type: ChangeType
+        +content: string
+        +oldLine: int
+        +newLine: int
+    }
+
+    class DiffResult {
+        -changes: vector<DiffChange>
+        +getChanges(): vector<DiffChange>
+        +getAddedCount(): int
+        +getRemovedCount(): int
+    }
+
+    DiffResult "1" *-- "0..*" DiffChange
+    DiffChange --> ChangeType
+    DiffOptions --> ComparisonLevel
+}
+
+' =====================================
+' Strategy Pattern
+' =====================================
+
+package "Strategy - Algorithms" {
+
+    abstract class DiffAlgorithm {
+        +compare(original: vector<string>, modified: vector<string>): DiffResult
+    }
+
+    class LCSAlgorithm {
+        +compare(original: vector<string>, modified: vector<string>): DiffResult
+    }
+
+    class MyersAlgorithm {
+        +compare(original: vector<string>, modified: vector<string>): DiffResult
+    }
+
+    class DiffEngine {
+        -algorithm: DiffAlgorithm
+        -reader: FileContentReader
+        -options: DiffOptions
+        +setAlgorithm(algorithm: DiffAlgorithm): void
+        +setReader(reader: FileContentReader): void
+        +setOptions(options: DiffOptions): void
+        +compare(original: vector<string>, modified: vector<string>): DiffResult
+        +compareFiles(path1: string, path2: string): DiffResult
+    }
+
+    DiffAlgorithm <|-- LCSAlgorithm
+    DiffAlgorithm <|-- MyersAlgorithm
+    DiffEngine o-- DiffAlgorithm
+}
+
+DiffEngine --> DiffOptions
+DiffEngine ..> DiffResult
+DiffAlgorithm ..> DiffResult
+
+' =====================================
+' Composite Pattern
+' =====================================
+
+package "Composite - File System" {
+
+    abstract class FileSystemNode {
+        +getName(): string
+        +accept(visitor: FileSystemVisitor): void
+    }
+
+    class FileNode {
+        -name: string
+        -path: string
+        +getName(): string
+        +getPath(): string
+        +accept(visitor: FileSystemVisitor): void
+    }
+
+    class DirectoryNode {
+        -name: string
+        -children: vector<shared_ptr<FileSystemNode>>
+        +add(node: FileSystemNode): void
+        +remove(node: FileSystemNode): void
+        +getName(): string
+        +getChildren(): vector<shared_ptr<FileSystemNode>>
+        +accept(visitor: FileSystemVisitor): void
+    }
+
+    FileSystemNode <|-- FileNode
+    FileSystemNode <|-- DirectoryNode
+
+    DirectoryNode "1" *-- "0..*" FileSystemNode
+}
+
+' =====================================
+' Visitor Pattern
+' =====================================
+
+package "Visitor - File Operations" {
+
+    interface FileSystemVisitor {
+        +visitFile(file: FileNode): void
+        +visitDirectory(directory: DirectoryNode): void
+    }
+
+    class StatisticsVisitor {
+        -fileCount: int
+        -directoryCount: int
+        +visitFile(file: FileNode): void
+        +visitDirectory(directory: DirectoryNode): void
+        +getFileCount(): int
+        +getDirectoryCount(): int
+    }
+
+    FileSystemVisitor <|.. StatisticsVisitor
+}
+
+FileSystemNode ..> FileSystemVisitor
+
+' =====================================
+' Adapter Pattern
+' =====================================
+
+package "Adapter - File Readers" {
+
+    interface FileContentReader {
+        +read(path: string): vector<string>
+    }
+
+    class TextFileReader {
+        +read(path: string): vector<string>
+    }
+
+    class JsonValue {
+        +type: JsonType
+    }
+
+    class JsonParser {
+        +parse(path: string): JsonValue
+    }
+
+    class JsonFileAdapter {
+        -parser: JsonParser
+        +read(path: string): vector<string>
+    }
+
+    FileContentReader <|.. TextFileReader
+    FileContentReader <|.. JsonFileAdapter
+
+    JsonFileAdapter --> JsonParser
+    JsonParser ..> JsonValue
+}
+
+DiffEngine o-- FileContentReader
+
+' =====================================
+' Directory Comparison
+' =====================================
+
+package "Directory Comparison" {
+
+    enum FileStatus {
+        ADDED
+        REMOVED
+        MODIFIED
+        UNCHANGED
+    }
+
+    class DirectoryDiffEntry {
+        +relativePath: string
+        +status: FileStatus
+    }
+
+    class DirectoryDiffResult {
+        -entries: vector<DirectoryDiffEntry>
+        +getEntries(): vector<DirectoryDiffEntry>
+        +getAddedCount(): int
+        +getRemovedCount(): int
+        +getModifiedCount(): int
+    }
+
+    class DirectoryComparator {
+        -engine: DiffEngine
+        -recursive: bool
+        -ignoreMasks: vector<string>
+        +setRecursive(value: bool): void
+        +setIgnoreMasks(masks: vector<string>): void
+        +compareDirectories(path1: string, path2: string): DirectoryDiffResult
+    }
+
+    DirectoryDiffResult "1" *-- "0..*" DirectoryDiffEntry
+    DirectoryDiffEntry --> FileStatus
+    DirectoryComparator ..> DirectoryDiffResult
+}
+
+DirectoryComparator o-- DiffEngine
+DirectoryComparator ..> DirectoryNode
+
+' =====================================
+' Export
+' =====================================
+
+package "Export" {
+
+    class UnifiedDiffExporter {
+        +export(result: DiffResult, path: string): void
+    }
+
+    class JsonSummaryExporter {
+        +export(result: DirectoryDiffResult, path: string): void
+    }
+}
+
+UnifiedDiffExporter ..> DiffResult
+JsonSummaryExporter ..> DirectoryDiffResult
+
+' =====================================
+' Python GUI and C++ Bindings
+' =====================================
+
+package "Python GUI" {
+
+    class MainWindow {
+        -engine: DiffEngine
+        -directoryComparator: DirectoryComparator
+        +selectOriginalFile(): void
+        +selectModifiedFile(): void
+        +compareFiles(): void
+        +compareDirectories(): void
+        +displayResult(result: DiffResult): void
+        +exportUnifiedDiff(path: string): void
+    }
+
+    class DiffCoreBindings {
+        +compareFiles(path1: string, path2: string): DiffResult
+    }
+}
+
+MainWindow --> DiffCoreBindings
+DiffCoreBindings ..> DiffEngine
+
+MainWindow --> DiffEngine
+MainWindow --> DirectoryComparator
+MainWindow ..> UnifiedDiffExporter
+MainWindow ..> JsonSummaryExporter
+
+@enduml

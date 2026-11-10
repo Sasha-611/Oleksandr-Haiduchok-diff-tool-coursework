@@ -1,0 +1,44 @@
+
+@startuml
+title Visitor Pattern - File System Operations
+
+skinparam classAttributeIconSize 0
+skinparam linetype ortho
+skinparam shadowing false
+
+left to right direction
+
+abstract class FileSystemNode {
+    +accept(visitor: FileSystemVisitor): void
+}
+
+class FileNode {
+    +accept(visitor: FileSystemVisitor): void
+}
+
+class DirectoryNode {
+    +accept(visitor: FileSystemVisitor): void
+}
+
+interface FileSystemVisitor {
+    +visitFile(file: FileNode): void
+    +visitDirectory(directory: DirectoryNode): void
+}
+
+class StatisticsVisitor {
+    -fileCount: int
+    -directoryCount: int
+    +visitFile(file: FileNode): void
+    +visitDirectory(directory: DirectoryNode): void
+    +getFileCount(): int
+    +getDirectoryCount(): int
+}
+
+FileSystemNode <|-- FileNode
+FileSystemNode <|-- DirectoryNode
+
+FileSystemVisitor <|.. StatisticsVisitor
+
+FileSystemNode ..> FileSystemVisitor
+
+@enduml

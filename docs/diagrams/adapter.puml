@@ -1,0 +1,38 @@
+
+@startuml
+title Adapter Pattern - File Content Readers
+
+skinparam classAttributeIconSize 0
+skinparam linetype ortho
+skinparam shadowing false
+
+left to right direction
+
+interface FileContentReader {
+    +read(path: string): vector<string>
+}
+
+class TextFileReader {
+    +read(path: string): vector<string>
+}
+
+class JsonFileAdapter {
+    -parser: JsonParser
+    +read(path: string): vector<string>
+}
+
+class JsonParser {
+    +parse(path: string): JsonValue
+}
+
+class JsonValue {
+    +type: JsonType
+}
+
+FileContentReader <|.. TextFileReader
+FileContentReader <|.. JsonFileAdapter
+
+JsonFileAdapter --> JsonParser
+JsonParser ..> JsonValue
+
+@enduml
